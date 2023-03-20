@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+# this the type of object we are making
+kind: Deployment
+metadata:
+# This is the name of my deployment
+  name: cit270authenticationservice
+# The specification for our deployment
+spec:
+# How many pods?
+  replicas: 1
+# Used to identify the pod we want to talk to  
+  selector:
+    matchLabels:
+      app: cit270authenticationservice
+# Template to create containers
+  template:
+    metadata:
+      name: cit270authenticationservice
+      labels:
+        app: cit270authenticationservice
+# specification for pod        
+    spec:
+      containers:
+# name of container      
+      - name: cit270authenticationservice
+# Docker image registry      
+        image: scmurdock/cit270-fall2022
+# Directories we are making accessible to containers        
+        volumeMounts:
+# Name of the volume        
+        - name: ssl
+# Directory for certificates        
+          mountPath: "/etc/letsencrypt/live/seanmurdock.cit270.com"
+# First part of the command to start our API          
+        command: ["npm"]
+# Parameters to add to the command        
+        args: ["run","start"]
+# Resources for the pod
+        resources:
+          requests:
+# How many cores to start with        
+            cpu: 0.125
+# How much memory to start             
+            memory: 500Mi
+          limits:
+# How many cores to limit to          
+            cpu: 0.125
+# Max memory for the pod            
+            memory: 600Mi
+        imagePullPolicy: Always
+# Create volumes from the secrets        
+      volumes:
+# Name of the secret      
+      - name: ssl
+# Secret       
+        secret: 
+# Secret name you created today        
+          secretName: seancerts
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cit270authenticationservice-loadbalancer
+spec:
+  selector:
+    app: cit270authenticationservice
+  type: LoadBalancer
+  ports:
+  - port: 443
+    targetPort: 443
